@@ -1,0 +1,36 @@
+# Este script obtiene los nombres originales de los archivos y crear hipervínculos.
+
+function obtenerNombreArchivoYCrearHipervinculo() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getActiveSheet();
+  var lastRow = sheet.getLastRow();
+  var urlColumn = 1; // Columna A (donde están las URLs)
+  var outputColumn = 2; // Columna B (donde se colocará el nombre con hipervínculo)
+
+  for (var i = 1; i <= lastRow; i++) {
+    var fileUrl = sheet.getRange(i, urlColumn).getValue();
+
+    // Verificar si la celda de la URL no está vacía
+    if (fileUrl) {
+      try {
+        // Extraer el ID del archivo de la URL
+        var fileIdMatch = fileUrl.match(/d\/([a-zA-Z0-9-_]+)/);
+        if (fileIdMatch && fileIdMatch[1]) {
+          var fileId = fileIdMatch[1];
+          var file = DriveApp.getFileById(fileId);
+          var fileName = file.getName();
+          var fileLink = file.getUrl(); // Obtener el enlace directo del archivo (puede ser diferente al de "vista")
+
+          // Crear el hipervínculo en la celda de la columna de salida
+          // cambiar el delimitadore de argumentos de ser necesario
+          sheet.getRange(i, outputColumn).setValue('=HYPERLINK("' + fileLink + '"; "' + fileName + '")');
+        } else {
+          sheet.getRange(i, outputColumn).setValue("URL inválida");
+        }
+      } catch (e) {
+        sheet.getRange(i, outputColumn).setValue("Error al obtener el archivo");
+        Logger.log("Error al procesar la fila " + i + ": " + e);
+      }
+    }
+  }
+}
